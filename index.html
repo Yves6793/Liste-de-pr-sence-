@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12202e">
+<title>TÉNOR VBC · Présences</title>
+<style>
+:root{--ink:#12202e;--ink2:#5b6b7a;--paper:#f4f6f8;--card:#fff;--line:#dde3e9;--upt:#0e4a7b;--uni:#1d7a5f;--ok:#1d7a5f;--warn:#b7791f;--bad:#b42318;--r:10px}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--paper);color:var(--ink);line-height:1.4;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid #6aa8e0;outline-offset:2px}
+.top{background:var(--ink);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:5}
+.brand b{display:block;font-size:19px;letter-spacing:.2px}
+.brand span{font-size:12.5px;color:#a9b8c6}
+.sync{font-size:12.5px;display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:99px;background:#1d2f40;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:#e0a526}
+.sync.on i{background:#3ecf8e}.sync.pend i{background:#e0a526}.sync.off i{background:#8493a1}
+main{max-width:640px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+h2{font-size:17px;margin:4px 0 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+input,select{width:100%;padding:11px 12px;border:1px solid #c6cfd8;border-radius:8px;background:#fff;font-size:16px;margin-bottom:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;background:#e6ebf0;border-radius:9px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;padding:9px 6px;border-radius:7px;font-size:14px;font-weight:600;color:var(--ink2)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(18,32,46,.18)}
+.seg button[data-v=upt].on{color:var(--upt)}.seg button[data-v=uni].on{color:var(--uni)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:9px;font-weight:700;font-size:15px;background:var(--ink);color:#fff}
+.btn.wa{background:#1a8f4c}.btn.ghost{background:#fff;color:var(--ink);border:1px solid #c6cfd8}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stat{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.stat strong{font-size:30px;line-height:1}.stat span{color:var(--ink2);font-size:14px}
+.bar{height:6px;background:#e6ebf0;border-radius:9px;overflow:hidden;margin-bottom:14px}
+.bar div{height:100%;background:var(--ok);width:0;transition:width .25s}
+.grp{font-size:13px;font-weight:700;margin:16px 0 8px;display:flex;justify-content:space-between;color:var(--ink2)}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--tc,#aab);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;min-height:56px}
+.row.upt{--tc:var(--upt)}.row.uni{--tc:var(--uni)}
+.row .n{width:26px;color:var(--ink2);font-size:13px;font-variant-numeric:tabular-nums}
+.row .nm{flex:1;font-weight:600;font-size:15.5px}
+.row .nm small{display:block;font-weight:400;font-size:12.5px;color:var(--ink2)}
+.chk{width:28px;height:28px;border-radius:50%;border:2px solid #b5c0cb;display:grid;place-items:center;color:#fff;font-size:16px;flex:none}
+.row.p{background:#eef8f3}.row.p .chk{background:var(--ok);border-color:var(--ok)}
+.tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;color:#fff;background:var(--tc)}
+.x{width:38px;height:38px;border-radius:8px;color:var(--bad);font-size:18px;background:#fdecea}
+.empty{text-align:center;color:var(--ink2);padding:26px 10px;font-size:14px}
+.hist{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;margin-bottom:8px}
+.hist b{display:block}.hist small{color:var(--ink2);font-size:12.5px}
+.cnt{font-weight:700;font-size:15px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+.tabs button{flex:1;padding:11px 4px 10px;font-size:12.5px;font-weight:600;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabs button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{color:var(--upt);box-shadow:inset 0 3px 0 var(--upt)}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90%}
+.toast.show{opacity:1}
+[hidden]{display:none!important}
+.dt{display:flex;gap:10px;margin-bottom:12px}.dt input{margin:0}
+.iconbtn{width:46px;flex:none;border:1px solid #c6cfd8;border-radius:8px;background:#fff;display:grid;place-items:center;color:var(--ink2)}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.head h2{margin:0}.hb{display:flex;gap:8px}
+.hb .iconbtn{height:38px;width:40px}.btn.sm{width:auto;padding:0 14px;height:38px;font-size:14px}
+.item{margin-bottom:8px}.item .row{cursor:pointer}.chev{color:var(--ink2);font-size:20px}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 4px 2px;font-size:13px;color:var(--ink2)}
+.acts span{flex:1 0 100%}.acts button{padding:8px 12px;border:1px solid #c6cfd8;border-radius:8px;background:#fff;font-size:13.5px;font-weight:600}
+.acts .del{color:var(--bad);border-color:#f0c4c0}
+details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summary{cursor:pointer;padding:4px 0}details.more select{margin:8px 0 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>TÉNOR VBC</b><span>Suivi des présences</span></div>
+  <div id="sync" class="sync off"><i></i><span>Connexion…</span></div>
+</header>
+<main>
+  <!-- APPEL -->
+  <section id="v-appel" class="view on">
+    <div class="panel">
+      <div class="dt"><input type="date" id="date" aria-label="Date de la séance"><button class="iconbtn" id="fToggle" aria-label="Filtrer par équipe"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg></button></div>
+      <div id="fBox" hidden><div class="seg" id="segEquipe" aria-label="Équipe">
+        <button data-v="all" class="on">Tous</button><button data-v="uni">Université</button><button data-v="upt">UPT Ténor</button>
+      </div></div>
+      <div class="stat"><strong id="nbP">0</strong><span id="nbT">sur 0 joueurs</span></div>
+      <div class="bar"><div id="bar"></div></div>
+      <input type="search" id="q" placeholder="Rechercher un joueur" aria-label="Rechercher un joueur" style="margin-bottom:0">
+    </div>
+    <div id="listeAppel"></div>
+    <div class="panel" style="margin-top:16px">
+      <div class="btns">
+        <button class="btn" id="copier">Copier la liste</button>
+        <button class="btn wa" id="wa">Envoyer sur WhatsApp</button>
+      </div>
+      <details class="more"><summary>Format des noms</summary><select id="aff" aria-label="Format des noms"><option value="full">Nom et prénom</option><option value="nom">Nom seulement</option><option value="prenom">Prénom seulement</option></select></details>
+      <p style="font-size:12.5px;color:var(--ink2);margin-top:10px" id="dernier"></p>
+    </div>
+  </section>
+
+  <!-- EFFECTIF -->
+  <section id="v-effectif" class="view">
+    <div class="panel" id="addBox" hidden>
+      <h2>Nouveau joueur</h2>
+      <div class="two"><div><label for="nom">Nom</label><input id="nom" autocomplete="off"></div><div><label for="prenom">Prénom</label><input id="prenom" autocomplete="off"></div></div>
+      <div class="two"><div><label for="equipe">Équipe</label><select id="equipe"><option value="upt">UPT Ténor</option><option value="uni">Université</option></select></div>
+      <div><label for="statut">Statut</label><select id="statut"><option value="ancien">Ancien</option><option value="nouveau">Nouveau</option></select></div></div>
+      <label for="sexe">Sexe</label><select id="sexe"><option value="H">Homme</option><option value="F">Femme</option></select>
+      <button class="btn" id="ajout">Ajouter au répertoire</button>
+    </div>
+    <div class="head"><h2>Effectif <span id="totJ" style="color:var(--ink2);font-weight:500"></span></h2><div class="hb"><button class="iconbtn" id="fxToggle" aria-label="Filtres"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg></button><button class="btn sm" id="addToggle">+ Ajouter</button></div></div>
+    <div class="panel" id="fxBox" hidden>
+      <div class="seg" id="fEq"><button data-v="all" class="on">Tous</button><button data-v="uni">Université</button><button data-v="upt">UPT Ténor</button></div>
+      <div class="two">
+        <select id="fSt" aria-label="Statut" style="margin:0"><option value="all">Tous statuts</option><option value="ancien">Anciens</option><option value="nouveau">Nouveaux</option></select>
+        <select id="fSx" aria-label="Sexe" style="margin:0"><option value="all">Tous sexes</option><option value="H">Hommes</option><option value="F">Femmes</option></select>
+      </div>
+    </div>
+    <div id="listeEff"></div>
+  </section>
+
+  <!-- SÉANCES -->
+  <section id="v-seances" class="view">
+    <h2>Séances enregistrées</h2>
+    <div id="listeSeances"></div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-t="appel" class="on"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>Appel</button>
+  <button data-t="effectif"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 010 6M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg>Effectif</button>
+  <button data-t="seances"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Séances</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, updateDoc, collection, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDe_aQ5ktR0CE6DrAsHCENY561RkaJzL",
+  authDomain: "tenor-vbc.firebaseapp.com",
+  projectId: "tenor-vbc",
+  storageBucket: "tenor-vbc.firebasestorage.app",
+  messagingSenderId: "930075727349",
+  appId: "1:930075727349:web:2b09640fc534ad29c23"
+});
+// Cache local persistant : tout fonctionne sans connexion, la synchro se fait au retour du réseau
+const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+const $ = id => document.getElementById(id);
+const EQ = { upt: "UPT Ténor", uni: "Université" };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const fr = iso => { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
+
+let joueurs = [], seances = {}, eqAppel = "all", fEq = "all", pending = false, online = navigator.onLine;
+$("date").value = today();
+
+function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2200); }
+function nomAff(j, mode) {
+  mode = mode || $("aff").value;
+  if (mode === "nom") return j.nom;
+  if (mode === "prenom") return j.prenom || j.nom;
+  return j.prenom ? `${j.nom} ${j.prenom}` : j.nom;
+}
+const eqDe = j => j.equipe === "uni" ? "uni" : "upt";
+const presentsDe = dt => { const s = seances[dt]; if (!s) return []; return s.presents || (s.joueurs || []).filter(x => x.coche).map(x => x.id); };
+
+// Navigation
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + b.dataset.t));
+  scrollTo(0, 0);
+});
+function seg(id, cb) { $(id).querySelectorAll("button").forEach(b => b.onclick = () => { $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); cb(b.dataset.v); }); }
+seg("segEquipe", v => { eqAppel = v; rendreAppel(); });
+seg("fEq", v => { fEq = v; rendreEffectif(); });
+["fSt", "fSx"].forEach(i => $(i).onchange = rendreEffectif);
+$("aff").onchange = rendreAppel;
+$("fToggle").onclick = () => { $("fBox").hidden = !$("fBox").hidden; };
+$("addToggle").onclick = () => { $("addBox").hidden = !$("addBox").hidden; };
+$("fxToggle").onclick = () => { $("fxBox").hidden = !$("fxBox").hidden; };
+$("q").oninput = rendreAppel;
+$("date").onchange = rendreAppel;
+
+function statut() {
+  const c = $("sync");
+  if (!online) { c.className = "sync off"; c.lastChild.textContent = "Hors ligne"; }
+  else if (pending) { c.className = "sync pend"; c.lastChild.textContent = "Envoi en cours"; }
+  else { c.className = "sync on"; c.lastChild.textContent = "Synchronisé"; }
+}
+addEventListener("online", () => { online = true; statut(); });
+addEventListener("offline", () => { online = false; statut(); });
+
+// Appel
+function ligneJoueur(j, i, p) {
+  return `<button class="row ${eqDe(j)} ${p ? "p" : ""}" data-id="${esc(j.id)}" aria-pressed="${p}">
+    <span class="n">${i + 1}</span>
+    <span class="nm">${esc(nomAff(j))}</span>
+    <span class="chk">${p ? "✓" : ""}</span></button>`;
+}
+function rendreAppel() {
+  const dt = $("date").value || today(), pres = new Set(presentsDe(dt));
+  const q = $("q").value.trim().toLowerCase();
+  const base = joueurs.filter(j => eqAppel === "all" || eqDe(j) === eqAppel);
+  const vis = base.filter(j => !q || `${j.nom} ${j.prenom || ""}`.toLowerCase().includes(q));
+  const np = base.filter(j => pres.has(j.id)).length;
+  $("nbP").textContent = np;
+  $("nbT").textContent = `présent${np > 1 ? "s" : ""} sur ${base.length}`;
+  $("bar").style.width = base.length ? (100 * np / base.length) + "%" : "0";
+  let h = "";
+  if (!joueurs.length) h = `<div class="empty">Le répertoire est vide.<br>Ajoutez des joueurs dans l’onglet Effectif.</div>`;
+  else if (!vis.length) h = `<div class="empty">Aucun joueur ne correspond.</div>`;
+  else {
+    const groupes = eqAppel === "all" ? ["uni", "upt"] : [eqAppel];
+    groupes.forEach(g => {
+      const l = vis.filter(j => eqDe(j) === g);
+      if (!l.length) return;
+      const n = l.filter(j => pres.has(j.id)).length;
+      h += `<div class="grp"><span>${EQ[g]}</span><span>${n}/${l.length}</span></div>`;
+      h += l.map((j, i) => ligneJoueur(j, i, pres.has(j.id))).join("");
+    });
+  }
+  $("listeAppel").innerHTML = h;
+  const s = seances[dt];
+  $("dernier").textContent = s && s.by ? `Dernière saisie : ${s.by}, ${new Date(s.updated).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : "";
+}
+$("listeAppel").onclick = async e => {
+  const b = e.target.closest(".row"); if (!b) return;
+  const dt = $("date").value || today(), id = b.dataset.id, est = presentsDe(dt).includes(id);
+  let by = localStorage.getItem("tenor_by");
+  if (!by) { by = (prompt("Votre prénom (pour que l’on sache qui a fait l’appel) :") || "").trim() || "Anonyme"; localStorage.setItem("tenor_by", by); }
+  try {
+    await setDoc(doc(db, "seances", dt), { date: dt, presents: est ? arrayRemove(id) : arrayUnion(id), by, updated: Date.now() }, { merge: true });
+  } catch (err) { toast("Enregistrement impossible. Réessayez."); }
+};
+
+function message() {
+  const dt = $("date").value || today(), pres = new Set(presentsDe(dt));
+  const groupes = eqAppel === "all" ? ["uni", "upt"] : [eqAppel];
+  const p = groupes.flatMap(g => joueurs.filter(j => eqDe(j) === g && pres.has(j.id)));
+  return `🏐 Liste de présence du ${fr(dt)}\n\n` + (p.length ? p.map((j, i) => `${i + 1}. ${nomAff(j)}`).join("\n") : "Aucun présent");
+}
+$("copier").onclick = () => navigator.clipboard.writeText(message()).then(() => toast("Liste copiée"), () => toast("Copie impossible"));
+$("wa").onclick = () => open("https://wa.me/?text=" + encodeURIComponent(message()), "_blank");
+
+// Effectif
+$("ajout").onclick = async () => {
+  const nom = $("nom").value.trim(); if (!nom) { toast("Saisissez au moins un nom"); $("nom").focus(); return; }
+  const id = Date.now().toString();
+  setDoc(doc(db, "repertoire", id), { id, nom, prenom: $("prenom").value.trim(), equipe: $("equipe").value, statut: $("statut").value, sexe: $("sexe").value }).catch(() => toast("Ajout impossible"));
+  $("nom").value = ""; $("prenom").value = ""; $("nom").focus();
+  toast("Joueur ajouté");
+};
+function rendreEffectif() {
+  const l = joueurs.filter(j => (fEq === "all" || eqDe(j) === fEq) && ($("fSt").value === "all" || j.statut === $("fSt").value) && ($("fSx").value === "all" || j.sexe === $("fSx").value));
+  $("totJ").textContent = `(${l.length})`;
+  $("listeEff").innerHTML = l.length ? l.map((j, i) => `
+    <div class="item"><div class="row ${eqDe(j)}" data-o="1" style="margin:0"><span class="n">${i + 1}</span><span class="nm">${esc(nomAff(j, "full"))}</span><span class="chev">›</span></div>
+      <div class="acts" hidden><span>${EQ[eqDe(j)]} · ${j.statut === "nouveau" ? "Nouveau" : "Ancien"} · ${j.sexe === "F" ? "Femme" : "Homme"}</span>
+        <button data-sw="${esc(j.id)}">Changer d’équipe</button><button class="del" data-del="${esc(j.id)}">Supprimer</button></div></div>`).join("") : `<div class="empty">Aucun joueur dans cette sélection.</div>`;
+}
+$("listeEff").onclick = e => {
+  const o = e.target.closest("[data-o]"); if (o) { o.nextElementSibling.hidden = !o.nextElementSibling.hidden; return; }
+  const s = e.target.closest("[data-sw]"), d = e.target.closest("[data-del]");
+  if (s) { const j = joueurs.find(x => x.id === s.dataset.sw); updateDoc(doc(db, "repertoire", j.id), { equipe: eqDe(j) === "upt" ? "uni" : "upt" }).catch(() => toast("Modification impossible")); }
+  if (d && confirm("Supprimer ce joueur du répertoire ?")) deleteDoc(doc(db, "repertoire", d.dataset.del)).catch(() => toast("Suppression impossible"));
+};
+
+// Séances
+function rendreSeances() {
+  const ks = Object.keys(seances).sort().reverse();
+  $("listeSeances").innerHTML = ks.length ? ks.map(k => {
+    const s = seances[k], n = presentsDe(k).length;
+    return `<button class="hist" data-d="${esc(k)}"><span><b>${fr(k)}</b><small>${s.by ? "Saisi par " + esc(s.by) : "Séance enregistrée"}</small></span><span class="cnt">${n} présent${n > 1 ? "s" : ""}</span></button>`;
+  }).join("") : `<div class="empty">Aucune séance enregistrée.<br>Cochez des joueurs dans l’onglet Appel.</div>`;
+}
+$("listeSeances").onclick = e => {
+  const b = e.target.closest(".hist"); if (!b) return;
+  $("date").value = b.dataset.d; rendreAppel();
+  document.querySelector('.tabs [data-t="appel"]').click();
+};
+
+// Temps réel
+onSnapshot(collection(db, "repertoire"), snap => {
+  joueurs = snap.docs.map(d => d.data()).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+  rendreAppel(); rendreEffectif();
+}, () => { online = false; statut(); });
+onSnapshot(collection(db, "seances"), { includeMetadataChanges: true }, snap => {
+  seances = {}; snap.forEach(d => { const s = d.data(); seances[s.date || d.id] = s; });
+  pending = snap.metadata.hasPendingWrites; statut();
+  rendreAppel(); rendreSeances();
+}, () => { online = false; statut(); });
+statut();
+</script>
+</body>
+</html>
