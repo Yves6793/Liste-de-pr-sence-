@@ -67,6 +67,8 @@ input,select{width:100%;padding:11px 12px;border:1px solid #c6cfd8;border-radius
 .acts span{flex:1 0 100%}.acts button{padding:8px 12px;border:1px solid #c6cfd8;border-radius:8px;background:#fff;font-size:13.5px;font-weight:600}
 .acts .del{color:var(--bad);border-color:#f0c4c0}
 details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summary{cursor:pointer;padding:4px 0}details.more select{margin:8px 0 0}
+.hist{padding:0;align-items:stretch;gap:6px}.hist .hl{flex:1;display:flex;justify-content:space-between;align-items:center;padding:13px 14px;text-align:left}.hist .x{align-self:center;margin-right:8px}
+.modal{position:fixed;inset:0;background:rgba(18,32,46,.55);display:grid;place-items:center;z-index:20;padding:20px}.mbox{background:#fff;border-radius:12px;padding:18px;width:100%;max-width:360px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -93,7 +95,7 @@ details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summa
         <button class="btn" id="copier">Copier la liste</button>
         <button class="btn wa" id="wa">Envoyer sur WhatsApp</button>
       </div>
-      <details class="more"><summary>Format des noms</summary><select id="aff" aria-label="Format des noms"><option value="full">Nom et prénom</option><option value="nom">Nom seulement</option><option value="prenom">Prénom seulement</option></select></details>
+      <details class="more"><summary>Options</summary><select id="aff" aria-label="Format des noms"><option value="full">Nom et prénom</option><option value="nom">Nom seulement</option><option value="prenom">Prénom seulement</option></select><div class="two" style="margin-top:8px"><button class="btn ghost" id="toutC">Tout cocher</button><button class="btn ghost" id="toutD">Tout décocher</button></div></details>
       <p style="font-size:12.5px;color:var(--ink2);margin-top:10px" id="dernier"></p>
     </div>
   </section>
@@ -101,7 +103,7 @@ details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summa
   <!-- EFFECTIF -->
   <section id="v-effectif" class="view">
     <div class="panel" id="addBox" hidden>
-      <h2>Nouveau joueur</h2>
+      <h2 id="addTitle">Nouveau joueur</h2>
       <div class="two"><div><label for="nom">Nom</label><input id="nom" autocomplete="off"></div><div><label for="prenom">Prénom</label><input id="prenom" autocomplete="off"></div></div>
       <div class="two"><div><label for="equipe">Équipe</label><select id="equipe"><option value="upt">UPT Ténor</option><option value="uni">Université</option></select></div>
       <div><label for="statut">Statut</label><select id="statut"><option value="ancien">Ancien</option><option value="nouveau">Nouveau</option></select></div></div>
@@ -117,12 +119,15 @@ details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summa
       </div>
     </div>
     <div id="listeEff"></div>
+    <details class="more" style="margin-top:18px"><summary>Outils administrateur</summary>
+      <div class="two" style="margin-top:8px"><button class="btn ghost" id="imp">Importer la liste initiale</button><button class="btn ghost" id="chgCode">Changer le code</button></div></details>
   </section>
 
   <!-- SÉANCES -->
   <section id="v-seances" class="view">
     <h2>Séances enregistrées</h2>
     <div id="listeSeances"></div>
+    <button class="btn ghost" id="csv" style="margin-top:8px">Exporter les présences (CSV)</button>
   </section>
 </main>
 
@@ -131,6 +136,7 @@ details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summa
   <button data-t="effectif"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 010 6M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg>Effectif</button>
   <button data-t="seances"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Séances</button>
 </nav>
+<div class="modal" id="pw" hidden><div class="mbox"><label id="pwt" for="pwi"></label><input type="password" id="pwi" autocomplete="off"><div class="two"><button class="btn ghost" id="pwc">Annuler</button><button class="btn" id="pwo">Valider</button></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -157,13 +163,14 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const fr = iso => { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
 
 let joueurs = [], seances = {}, eqAppel = "all", fEq = "all", pending = false, online = navigator.onLine;
+let editId = null, adminHash = null, adminReady = false, unlockedUntil = 0;
 $("date").value = today();
 
 function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2200); }
 function nomAff(j, mode) {
   mode = mode || $("aff").value;
   if (mode === "nom") return j.nom;
-  if (mode === "prenom") return j.prenom || j.nom;
+  if (mode === "prenom") return (j.prenom || "").trim().split(/\s+/).pop() || j.nom;
   return j.prenom ? `${j.nom} ${j.prenom}` : j.nom;
 }
 const eqDe = j => j.equipe === "uni" ? "uni" : "upt";
@@ -181,7 +188,7 @@ seg("fEq", v => { fEq = v; rendreEffectif(); });
 ["fSt", "fSx"].forEach(i => $(i).onchange = rendreEffectif);
 $("aff").onchange = rendreAppel;
 $("fToggle").onclick = () => { $("fBox").hidden = !$("fBox").hidden; };
-$("addToggle").onclick = () => { $("addBox").hidden = !$("addBox").hidden; };
+$("addToggle").onclick = () => { const h = !$("addBox").hidden; $("addBox").hidden = h; if (h) resetForm(); };
 $("fxToggle").onclick = () => { $("fxBox").hidden = !$("fxBox").hidden; };
 $("q").oninput = rendreAppel;
 $("date").onchange = rendreAppel;
@@ -250,8 +257,10 @@ $("wa").onclick = () => open("https://wa.me/?text=" + encodeURIComponent(message
 // Effectif
 $("ajout").onclick = async () => {
   const nom = $("nom").value.trim(); if (!nom) { toast("Saisissez au moins un nom"); $("nom").focus(); return; }
+  const champs = { nom, prenom: $("prenom").value.trim(), equipe: $("equipe").value, statut: $("statut").value, sexe: $("sexe").value };
+  if (editId) { updateDoc(doc(db, "repertoire", editId), champs).catch(() => toast("Modification impossible")); resetForm(); $("addBox").hidden = true; toast("Joueur modifié"); return; }
   const id = Date.now().toString();
-  setDoc(doc(db, "repertoire", id), { id, nom, prenom: $("prenom").value.trim(), equipe: $("equipe").value, statut: $("statut").value, sexe: $("sexe").value }).catch(() => toast("Ajout impossible"));
+  setDoc(doc(db, "repertoire", id), { id, ...champs }).catch(() => toast("Ajout impossible"));
   $("nom").value = ""; $("prenom").value = ""; $("nom").focus();
   toast("Joueur ajouté");
 };
@@ -260,28 +269,91 @@ function rendreEffectif() {
   $("totJ").textContent = `(${l.length})`;
   $("listeEff").innerHTML = l.length ? l.map((j, i) => `
     <div class="item"><div class="row ${eqDe(j)}" data-o="1" style="margin:0"><span class="n">${i + 1}</span><span class="nm">${esc(nomAff(j, "full"))}</span><span class="chev">›</span></div>
-      <div class="acts" hidden><span>${EQ[eqDe(j)]} · ${j.statut === "nouveau" ? "Nouveau" : "Ancien"} · ${j.sexe === "F" ? "Femme" : "Homme"}</span>
-        <button data-sw="${esc(j.id)}">Changer d’équipe</button><button class="del" data-del="${esc(j.id)}">Supprimer</button></div></div>`).join("") : `<div class="empty">Aucun joueur dans cette sélection.</div>`;
+      <div class="acts" hidden><span>${EQ[eqDe(j)]} · ${j.statut === "nouveau" ? "Nouveau" : "Ancien"} · ${j.sexe === "F" ? "Femme" : "Homme"} · présent à ${Object.keys(seances).filter(k => presentsDe(k).includes(j.id)).length}/${Object.keys(seances).length} séances</span>
+        <button data-ed="${esc(j.id)}">Modifier</button><button data-sw="${esc(j.id)}">Changer d’équipe</button><button class="del" data-del="${esc(j.id)}">Supprimer</button></div></div>`).join("") : `<div class="empty">Aucun joueur dans cette sélection.</div>`;
 }
-$("listeEff").onclick = e => {
+$("listeEff").onclick = async e => {
   const o = e.target.closest("[data-o]"); if (o) { o.nextElementSibling.hidden = !o.nextElementSibling.hidden; return; }
-  const s = e.target.closest("[data-sw]"), d = e.target.closest("[data-del]");
+  const s = e.target.closest("[data-sw]"), d = e.target.closest("[data-del]"), ed = e.target.closest("[data-ed]");
+  if (!s && !d && !ed) return;
+  if (!(await permission())) return;
+  if (ed) {
+    const j = joueurs.find(x => x.id === ed.dataset.ed); editId = j.id;
+    $("nom").value = j.nom; $("prenom").value = j.prenom || ""; $("equipe").value = eqDe(j); $("statut").value = j.statut; $("sexe").value = j.sexe;
+    $("ajout").textContent = "Enregistrer les modifications"; $("addTitle").textContent = "Modifier le joueur"; $("addBox").hidden = false; scrollTo({ top: 0, behavior: "smooth" });
+  }
   if (s) { const j = joueurs.find(x => x.id === s.dataset.sw); updateDoc(doc(db, "repertoire", j.id), { equipe: eqDe(j) === "upt" ? "uni" : "upt" }).catch(() => toast("Modification impossible")); }
   if (d && confirm("Supprimer ce joueur du répertoire ?")) deleteDoc(doc(db, "repertoire", d.dataset.del)).catch(() => toast("Suppression impossible"));
 };
+function resetForm() { editId = null; $("ajout").textContent = "Ajouter au répertoire"; $("addTitle").textContent = "Nouveau joueur"; $("nom").value = ""; $("prenom").value = ""; }
+
+// Code administrateur (empreinte SHA-256 stockée dans Firestore, jamais le code lui-même)
+const sha = async t => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("tenor-vbc:" + t)))].map(x => x.toString(16).padStart(2, "0")).join("");
+function askCode(t) { return new Promise(res => { $("pwt").textContent = t; $("pwi").value = ""; $("pw").hidden = false; $("pwi").focus(); const end = v => { $("pw").hidden = true; res(v); }; $("pwo").onclick = () => end($("pwi").value); $("pwc").onclick = () => end(null); }); }
+async function permission() {
+  if (Date.now() < unlockedUntil) return true;
+  if (!adminReady) { toast("Chargement… réessayez dans un instant"); return false; }
+  if (!adminHash) {
+    const c = await askCode("Créer le code administrateur (6 caractères minimum)");
+    if (!c || c.length < 6) { if (c !== null) toast("Code trop court"); return false; }
+    adminHash = await sha(c); setDoc(doc(db, "config", "admin"), { h: adminHash }); unlockedUntil = Date.now() + 6e5; return true;
+  }
+  const c = await askCode("Code administrateur"); if (!c) return false;
+  if (await sha(c) === adminHash) { unlockedUntil = Date.now() + 6e5; return true; }
+  toast("Code incorrect"); return false;
+}
+$("chgCode").onclick = async () => {
+  if (!(await permission())) return;
+  const c = await askCode("Nouveau code (6 caractères minimum)"); if (!c || c.length < 6) { if (c !== null) toast("Code trop court"); return; }
+  adminHash = await sha(c); setDoc(doc(db, "config", "admin"), { h: adminHash }); toast("Code modifié");
+};
+
+// Liste initiale : NOM|Prénoms|Sexe|Équipe (t = UPT Ténor, u = Université)|Statut (a = ancien, n = nouveau)
+const INIT = "OKPANIKE|Mohamed|H|t|a;HOUNGBO|Evrard Stelvio|H|u|a;MEDJE|Nicolas|H|t|a;AGBODEGBE|Armseslas Jean-Eudes|H|u|a;BONI|Carole|F|u|a;AJASA|Obafemi Judah|H|t|a;CHABI BATTA|Fadilatou|F|u|a;AHOGLE|Daniel|H|t|a;ADAM CHABI|Faouzane|H|u|a;DOSSA|Ismaël Kévin|H|t|a;SEHOU|Orynx|H|u|a;ADINGNI|Graciana|F|u|a;O. OFFIN|Ulrich|H|t|a;AZONDEKON|Mamert|H|t|a;ADJANI|Jores|H|t|a;DOHOU|Jeanine|F|u|a;AGBON|Mesmer|H|u|a;AYIHOSSOU|Yves|H|t|a;AYEDON|Judith|F|u|a;IMOROU|Chérifou-Dine|H|t|a;HOUNDOTÉ|Roger|H|t|a;AKPO|Caleb|H|t|a;ENINHOU|Franck|H|t|a;ASSOUMANOU|Moubaraka|H|t|a;ASSOUMA|Abdou-Rachide|H|u|n;AKPAKPA|Christian|H|u|n;GNAMI|Ismène|H|u|n;KADJOGBE|Cédolphe|H|u|n;KASSA C.I.|Charbelle|F|u|n;SABI GANKOU|Ephrahim|H|u|n;NATTA|N'Dah Simon|H|u|n;INOUSSA|Judicaël|H|u|n;NOUDEKE|Sabine|F|u|n;DEDODJI|Judicaël|H|u|n;WINRIKOU|Utile|F|u|n";
+$("imp").onclick = async () => {
+  if (!(await permission())) return;
+  const ex = new Set(joueurs.map(j => j.id)); let n = 0;
+  INIT.split(";").forEach((l, i) => {
+    const [nom, prenom, sexe, eq, st] = l.split("|"), id = "init-" + String(i + 1).padStart(2, "0");
+    if (ex.has(id)) return; n++;
+    setDoc(doc(db, "repertoire", id), { id, nom, prenom, sexe, equipe: eq === "t" ? "upt" : "uni", statut: st === "a" ? "ancien" : "nouveau" });
+  });
+  toast(n ? n + " joueurs importés" : "Liste déjà importée");
+};
+
+// Tout cocher / décocher
+function setAll(on) {
+  const dt = $("date").value || today(), ids = joueurs.filter(j => eqAppel === "all" || eqDe(j) === eqAppel).map(j => j.id);
+  if (!ids.length || (!on && !confirm("Décocher tous les joueurs affichés ?"))) return;
+  setDoc(doc(db, "seances", dt), { date: dt, presents: on ? arrayUnion(...ids) : arrayRemove(...ids), by: localStorage.getItem("tenor_by") || "Anonyme", updated: Date.now() }, { merge: true }).catch(() => toast("Échec"));
+}
+$("toutC").onclick = () => setAll(true); $("toutD").onclick = () => setAll(false);
 
 // Séances
 function rendreSeances() {
   const ks = Object.keys(seances).sort().reverse();
   $("listeSeances").innerHTML = ks.length ? ks.map(k => {
     const s = seances[k], n = presentsDe(k).length;
-    return `<button class="hist" data-d="${esc(k)}"><span><b>${fr(k)}</b><small>${s.by ? "Saisi par " + esc(s.by) : "Séance enregistrée"}</small></span><span class="cnt">${n} présent${n > 1 ? "s" : ""}</span></button>`;
+    return `<div class="hist"><button class="hl" data-d="${esc(k)}"><span><b>${fr(k)}</b><small>${s.by ? "Saisi par " + esc(s.by) : "Séance enregistrée"}</small></span><span class="cnt">${n} présent${n > 1 ? "s" : ""}</span></button><button class="x" data-ds="${esc(k)}" aria-label="Supprimer la séance du ${fr(k)}">✕</button></div>`;
   }).join("") : `<div class="empty">Aucune séance enregistrée.<br>Cochez des joueurs dans l’onglet Appel.</div>`;
 }
-$("listeSeances").onclick = e => {
-  const b = e.target.closest(".hist"); if (!b) return;
+$("listeSeances").onclick = async e => {
+  const x = e.target.closest("[data-ds]");
+  if (x) {
+    if (!(await permission())) return;
+    if (confirm(`Supprimer définitivement la séance du ${fr(x.dataset.ds)} ?`)) deleteDoc(doc(db, "seances", x.dataset.ds)).then(() => toast("Séance supprimée")).catch(() => toast("Suppression impossible"));
+    return;
+  }
+  const b = e.target.closest(".hl"); if (!b) return;
   $("date").value = b.dataset.d; rendreAppel();
   document.querySelector('.tabs [data-t="appel"]').click();
+};
+$("csv").onclick = () => {
+  const ks = Object.keys(seances).sort();
+  const rows = [["Nom", "Prénom", "Équipe", ...ks.map(fr), "Total"]];
+  joueurs.forEach(j => { const a = ks.map(k => presentsDe(k).includes(j.id) ? 1 : 0); rows.push([j.nom, j.prenom || "", EQ[eqDe(j)], ...a, a.reduce((u, v) => u + v, 0)]); });
+  const csv = "\ufeff" + rows.map(l => l.map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "presences-tenor-vbc.csv"; a.click();
 };
 
 // Temps réel
@@ -289,10 +361,14 @@ onSnapshot(collection(db, "repertoire"), snap => {
   joueurs = snap.docs.map(d => d.data()).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   rendreAppel(); rendreEffectif();
 }, () => { online = false; statut(); });
+onSnapshot(doc(db, "config", "admin"), s => {
+  if (s.exists()) { adminHash = s.data().h; adminReady = true; }
+  else if (!s.metadata.fromCache) { adminHash = null; adminReady = true; }
+});
 onSnapshot(collection(db, "seances"), { includeMetadataChanges: true }, snap => {
   seances = {}; snap.forEach(d => { const s = d.data(); seances[s.date || d.id] = s; });
   pending = snap.metadata.hasPendingWrites; statut();
-  rendreAppel(); rendreSeances();
+  rendreAppel(); rendreSeances(); rendreEffectif();
 }, () => { online = false; statut(); });
 statut();
 </script>
