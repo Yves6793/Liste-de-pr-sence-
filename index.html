@@ -91,11 +91,14 @@ details.more{margin-top:12px;font-size:13px;color:var(--ink2)}details.more summa
     </div>
     <div id="listeAppel"></div>
     <div class="panel" style="margin-top:16px">
+      <label>Affichage des noms</label>
+      <div class="seg" id="segAff"><button data-v="full" class="on">Nom et prénom</button><button data-v="prenom">Prénoms</button><button data-v="nom">Noms</button></div>
+      <input type="hidden" id="aff" value="full">
       <div class="btns">
         <button class="btn" id="copier">Copier la liste</button>
         <button class="btn wa" id="wa">Envoyer sur WhatsApp</button>
       </div>
-      <details class="more"><summary>Options</summary><select id="aff" aria-label="Format des noms"><option value="full">Nom et prénom</option><option value="nom">Nom seulement</option><option value="prenom">Prénom seulement</option></select><div class="two" style="margin-top:8px"><button class="btn ghost" id="toutC">Tout cocher</button><button class="btn ghost" id="toutD">Tout décocher</button></div></details>
+      <details class="more"><summary>Plus d’options</summary><div class="two" style="margin-top:8px"><button class="btn ghost" id="toutC">Tout cocher</button><button class="btn ghost" id="toutD">Tout décocher</button></div></details>
       <p style="font-size:12.5px;color:var(--ink2);margin-top:10px" id="dernier"></p>
     </div>
   </section>
@@ -185,6 +188,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
 function seg(id, cb) { $(id).querySelectorAll("button").forEach(b => b.onclick = () => { $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); cb(b.dataset.v); }); }
 seg("segEquipe", v => { eqAppel = v; rendreAppel(); });
 seg("fEq", v => { fEq = v; rendreEffectif(); });
+seg("segAff", v => { $("aff").value = v; rendreAppel(); });
 ["fSt", "fSx"].forEach(i => $(i).onchange = rendreEffectif);
 $("aff").onchange = rendreAppel;
 $("fToggle").onclick = () => { $("fBox").hidden = !$("fBox").hidden; };
@@ -222,14 +226,7 @@ function rendreAppel() {
   if (!joueurs.length) h = `<div class="empty">Le répertoire est vide.<br>Ajoutez des joueurs dans l’onglet Effectif.</div>`;
   else if (!vis.length) h = `<div class="empty">Aucun joueur ne correspond.</div>`;
   else {
-    const groupes = eqAppel === "all" ? ["uni", "upt"] : [eqAppel];
-    groupes.forEach(g => {
-      const l = vis.filter(j => eqDe(j) === g);
-      if (!l.length) return;
-      const n = l.filter(j => pres.has(j.id)).length;
-      h += `<div class="grp"><span>${EQ[g]}</span><span>${n}/${l.length}</span></div>`;
-      h += l.map((j, i) => ligneJoueur(j, i, pres.has(j.id))).join("");
-    });
+    h = vis.map((j, i) => ligneJoueur(j, i, pres.has(j.id))).join("");
   }
   $("listeAppel").innerHTML = h;
   const s = seances[dt];
@@ -247,8 +244,7 @@ $("listeAppel").onclick = async e => {
 
 function message() {
   const dt = $("date").value || today(), pres = new Set(presentsDe(dt));
-  const groupes = eqAppel === "all" ? ["uni", "upt"] : [eqAppel];
-  const p = groupes.flatMap(g => joueurs.filter(j => eqDe(j) === g && pres.has(j.id)));
+  const p = joueurs.filter(j => (eqAppel === "all" || eqDe(j) === eqAppel) && pres.has(j.id));
   return `🏐 Liste de présence du ${fr(dt)}\n\n` + (p.length ? p.map((j, i) => `${i + 1}. ${nomAff(j)}`).join("\n") : "Aucun présent");
 }
 $("copier").onclick = () => navigator.clipboard.writeText(message()).then(() => toast("Liste copiée"), () => toast("Copie impossible"));
